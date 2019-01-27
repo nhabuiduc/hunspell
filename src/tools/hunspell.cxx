@@ -51,6 +51,7 @@
 #include "../hunspell/hunspell.hxx"
 #include "../hunspell/csutil.hxx"
 #include "../hunspell/hunzip.hxx"
+#include <emscripten.h>
 
 #define HUNSPELL_VERSION VERSION
 #define INPUTLEN 50
@@ -117,6 +118,7 @@
 
 #define LIBDIR                \
   "/usr/share/hunspell:"      \
+  "/dics:"      \
   "/usr/share/myspell:"       \
   "/usr/share/myspell/dicts:" \
   "/Library/Spelling"
@@ -159,12 +161,12 @@ char text_conv[MAXLNLEN];
 # include <langinfo.h>
 #endif
 #ifdef ENABLE_NLS
-# include <libintl.h>
+// # include <libintl.h>
 #else
-# undef gettext
-# define gettext(Msgid) ((const char *) (Msgid))
-# undef textdomain
-# define textdomain(Domainname) ((const char *) (Domainname))
+// # undef gettext
+// # define gettext(Msgid) ((const char *) (Msgid))
+// # undef textdomain
+// # define textdomain(Domainname) ((const char *) (Domainname))
 #endif
 
 #ifdef HAVE_CURSES_H
@@ -221,6 +223,10 @@ int checkapos = 0;  // force typographic apostrophe
 int warn = 0;  // warn potential mistakes (dictionary words with WARN flags)
 const char* ui_enc = NULL;  // locale character encoding (default for I/O)
 const char* io_enc = NULL;  // I/O character encoding
+
+char *gettext (const char *__msgid) {
+  return (char *)__msgid;
+}
 
 #define DMAX 10  // maximal count of loaded dictionaries
 
@@ -1762,13 +1768,25 @@ int main(int argc, char** argv) {
   int format = FMT_TEXT;
   int argstate = 0;
 
+#ifndef NODERAWFS
+// mount the current folder as a NODEFS instance
+// inside of emscripten
+EM_ASM(
+  FS.mkdir('/dics');
+  FS.mount(NODEFS, { root: './dics' }, '/dics');
+
+  FS.mkdir('/inputs');
+  FS.mount(NODEFS, { root: './inputs' }, '/inputs');
+);
+#endif
+
 #ifdef HAVE_LOCALE_H
   setlocale(LC_ALL, "");
 #endif
 #ifdef HAVE_LANGINFO_H
   ui_enc = nl_langinfo(CODESET);
 #endif
-  textdomain("hunspell"); //for gettext
+  // textdomain("hunspell"); //for gettext
 
 #ifdef HAVE_READLINE
   rl_set_key("\x1b\x1b", rl_escape, rl_get_keymap());
@@ -1989,7 +2007,7 @@ int main(int argc, char** argv) {
                ((argv[i][0] != '-') && (argv[i][0] != '\0'))) {
       arg_files = i;
       if (!exist(argv[i])) {  // first check (before time-consuming dic. load)
-        fprintf(stderr, gettext("Can't open %s.\n"), argv[i]);
+        fprintf(stderr, gettext("Can't open here 1 %s.\n"), argv[i]);
 #ifdef HAVE_CURSES_H
         endwin();
 #endif

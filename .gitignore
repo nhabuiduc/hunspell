@@ -95,3 +95,12 @@ hunspell-*.tar.gz
 
 #MSVC
 /msvc/Hunspell.VC.VC.opendb
+*.aff
+*.dic
+*.data
+*.html
+hunspell.js
+a.out.js
+*.wasm
+.vscode
+Makefile.in
