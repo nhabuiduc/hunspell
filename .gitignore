@@ -104,3 +104,8 @@ a.out.js
 *.wasm
 .vscode
 Makefile.in
+src/hunspell/outputs
+src/hunspell/output-dic-data
+src/hunspell/temp-building
+
+temp-building
